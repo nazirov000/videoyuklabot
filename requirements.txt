@@ -5,4 +5,5 @@ imageio==2.31.1
 imageio-ffmpeg==0.4.9
 decorator==4.4.2
 proglog==0.1.10
+requests
 asyncio
