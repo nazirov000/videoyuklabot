@@ -19,7 +19,7 @@ from telegram.ext import (
 from telegram.request import HTTPXRequest
 
 # --- TOKEN ---
-BOT_TOKEN = os.getenv("BOT_TOKEN")
+BOT_TOKEN = os.getenv("7906977951:AAE7Z1T5CeUlbRf9si1-PxIPrR1QREbvq-M")
 if not BOT_TOKEN:
     raise ValueError("❌ BOT_TOKEN environment variable is not set!")
 
