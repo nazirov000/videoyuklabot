@@ -13,7 +13,7 @@ from telegram import (
     KeyboardButton
 )
 from telegram.ext import (
-    Application,
+    ApplicationBuilder,
     CommandHandler,
     MessageHandler,
     CallbackQueryHandler,
