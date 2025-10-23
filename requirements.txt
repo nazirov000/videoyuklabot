@@ -10,3 +10,4 @@ requests==2.32.3
 tqdm==4.67.1
 pillow>=8.3.2
 numpy>=1.17.3
+imghdr-py
