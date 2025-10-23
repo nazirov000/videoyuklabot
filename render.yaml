@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: telegram-bot
+    env: python
+    plan: free
+    buildCommand: bash build.sh
+    startCommand: python src/chats.py
+    envVars:
+      - key: BOT_TOKEN
+        scope: run
+        value: ${BOT_TOKEN}
