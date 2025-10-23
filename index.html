@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>Sevgilim uchun yurakcha</title>
+  <style>
+    :root{
+      --bg: #0a0f24;
+      --heart: #ff6b8a;
+      --heart-dark: #d93655;
+      --glow: rgba(255,107,138,0.5);
+      --accent: #ffe4ec;
+      --shadow: rgba(255,107,138,0.35);
+      --font: "Dancing Script", "Poppins", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Dancing+Script:wght@700&display=swap');
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: linear-gradient(180deg, #04091e 0%, var(--bg) 100%);
+      font-family:"Poppins", sans-serif;
+      color:var(--accent);
+      overflow-x:hidden;
+      position:relative;
+    }
+
+    /* Romantic background sparkles */
+    body::before {
+      content:'';
+      position:absolute;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      background: radial-gradient(circle at 50% 50%, rgba(255,107,138,0.15) 0%, transparent 60%);
+      pointer-events:none;
+      animation: pulse 5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 0.8; }
+    }
+
+    .card{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:16px;
+      padding:24px;
+      border-radius:20px;
+      background: rgba(255,255,255,0.06);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 12px 50px rgba(2,6,23,0.75);
+      transform: translateY(0);
+      position:relative;
+      z-index:1;
+      width:90%;
+      max-width:400px;
+    }
+
+    /* Container for the heart */
+    .heart-wrap{
+      width:260px;
+      height:260px;
+      display:grid;
+      place-items:center;
+      position:relative;
+    }
+
+    /* Enhanced floating with subtle rotation */
+    .heart-wrap {
+      animation: floatY 4s ease-in-out infinite, slightRotate 7s ease-in-out infinite;
+    }
+
+    @keyframes floatY {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+      100% { transform: translateY(0); }
+    }
+
+    @keyframes slightRotate {
+      0% { transform: rotate(0deg); }
+      50% { transform: rotate(3deg); }
+      100% { transform: rotate(0deg); }
+    }
+
+    /* SVG takes full container */
+    svg{ width:100%; height:100%; display:block; }
+
+    /* Enhanced heartbeat with glow */
+    .beat {
+      transform-origin: 50% 50%;
+      animation: beat 0.9s ease-in-out infinite;
+      filter: drop-shadow(0 12px 24px var(--shadow));
+    }
+
+    @keyframes beat {
+      0% { transform: scale(1); }
+      10% { transform: scale(1.25); }
+      25% { transform: scale(0.92); }
+      40% { transform: scale(1.12); }
+      60% { transform: scale(1); }
+      100% { transform: scale(1); }
+    }
+
+    /* Inner fill/gradient with richer colors */
+    .heart-fill{
+      fill: url(#g1);
+      stroke: var(--heart-dark);
+      stroke-width:2.5;
+      transition: fill 0.5s ease, stroke 0.5s ease;
+    }
+
+    /* Enhanced glow behind heart */
+    .glow {
+      position:absolute;
+      width:90%;
+      height:90%;
+      border-radius:50%;
+      background: radial-gradient(circle at 50% 40%, var(--glow), transparent 55%);
+      z-index:0;
+      filter: blur(16px);
+      pointer-events:none;
+      animation: glowPulse 2.5s ease-in-out infinite;
+    }
+
+    @keyframes glowPulse {
+      0%, 100% { opacity: 0.7; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.06); }
+    }
+
+    /* Text inside heart with shadow */
+    .label {
+      position:absolute;
+      z-index:2;
+      font-family:"Dancing Script", cursive;
+      font-weight:700;
+      font-size:36px;
+      letter-spacing:1px;
+      pointer-events:none;
+      user-select:none;
+      text-shadow: 0 3px 10px var(--shadow), 0 0 15px rgba(255,107,138,0.6);
+      transition: text-shadow 0.4s ease;
+    }
+
+    /* SVG text with shadow */
+    #svgName {
+      font-family:"Dancing Script", cursive;
+      filter: drop-shadow(0 3px 8px var(--shadow));
+    }
+
+    /* Small caption with glow */
+    .hint {
+      font-size:14px;
+      opacity:0.85;
+      text-align:center;
+      font-family:"Poppins", sans-serif;
+      text-shadow: 0 0 8px var(--glow);
+      line-height:1.4;
+    }
+
+    /* Editable name input with modern styling */
+    .controls{ 
+      display:flex; 
+      gap:10px; 
+      align-items:center; 
+      flex-wrap:wrap; 
+      justify-content:center; 
+    }
+    input[type="text"]{
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.06);
+      color:var(--accent);
+      outline:none;
+      width:180px;
+      font-family:"Poppins", sans-serif;
+      transition: border-color 0.4s ease, background 0.4s ease;
+      font-size:14px;
+    }
+    input[type="text"]:focus {
+      border-color: var(--heart);
+      background: rgba(255,255,255,0.12);
+    }
+    button{
+      padding:10px 16px;
+      border-radius:12px;
+      border:none;
+      cursor:pointer;
+      font-weight:600;
+      font-family:"Poppins", sans-serif;
+      background: linear-gradient(180deg, var(--heart) 0%, var(--heart-dark) 100%);
+      color:white;
+      box-shadow: 0 8px 20px var(--shadow);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      font-size:14px;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 24px var(--shadow);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width:480px){
+      .heart-wrap{ 
+        width:200px; 
+        height:200px; 
+      }
+      .label{ 
+        font-size:28px; 
+      }
+      .card{ 
+        padding:20px; 
+        gap:12px; 
+      }
+      .hint{ 
+        font-size:12px; 
+      }
+      input[type="text"]{ 
+        width:160px; 
+        padding:8px 10px; 
+        font-size:13px; 
+      }
+      button{ 
+        padding:8px 14px; 
+        font-size:13px; 
+      }
+    }
+
+    @media (max-width:360px){
+      .heart-wrap{ 
+        width:180px; 
+        height:180px; 
+      }
+      .label{ 
+        font-size:24px; 
+      }
+      .card{ 
+        padding:16px; 
+      }
+      input[type="text"], button{ 
+        width:140px; 
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="card" role="main" aria-label="Sevgilim uchun yurakcha animatsiya">
+    <div class="heart-wrap" aria-hidden="false">
+      <div class="glow"></div>
+
+      <!-- SVG heart with text inside -->
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="false">
+        <defs>
+          <linearGradient id="g1" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0%" stop-color="#ffb3c6"/>
+            <stop offset="50%" stop-color="#ff6b8a"/>
+            <stop offset="100%" stop-color="#d93655"/>
+          </linearGradient>
+        </defs>
+
+        <!-- Heart path centered in the viewBox -->
+        <g class="beat" transform="translate(0,0)">
+          <path class="heart-fill" d="
+            M50 82
+            C50 82 18 62 18 38
+            C18 24 30 16 42 24
+            C50 29 50 29 50 29
+            C50 29 50 29 58 24
+            C70 16 82 24 82 38
+            C82 62 50 82 50 82 Z
+          "/>
+
+          <!-- Enhanced inner shine -->
+          <ellipse cx="38" cy="34" rx="8" ry="5" fill="rgba(255,255,255,0.25)"/>
+        </g>
+
+        <!-- SVG text (for crisp center text) -->
+        <text id="svgName" x="50" y="53" text-anchor="middle" font-family="inherit"
+              font-weight="700" font-size="14" fill="white" style="pointer-events:none;">
+        </text>
+      </svg>
+
+      <!-- Overlay text with shadow -->
+      <div class="label" id="labelName"></div>
+    </div>
+
+    <div class="hint">💞 “Sevgi — ikki qalbning yuragi bir ohangda urishi, ikki insonning bitta baxtda yashashi.” 💞.</div>
+
+    <div class="controls" role="form" aria-label="Kod kiritish">
+      <input id="nameInput" type="text" placeholder="Maxfiy kodni kiriting" />
+      <button id="applyBtn">Kod</button>
+    </div>
+  </div>
+
+  <script>
+    // JS: Heartbeat text cycling logic
+    const input = document.getElementById('nameInput');
+    const applyBtn = document.getElementById('applyBtn');
+    const label = document.getElementById('labelName');
+    const svgText = document.getElementById('svgName');
+
+    let isCodeCorrect = false;
+    let beatCount = 0;
+    let firstText = "";
+
+    function setText(text) {
+      label.textContent = text;
+      svgText.textContent = text;
+      // Animation for text change
+      label.animate([
+        { transform: 'scale(0.92)', opacity: 0.7, textShadow: '0 0 10px var(--shadow)' },
+        { transform: 'scale(1.15)', opacity: 1, textShadow: '0 0 15px var(--shadow)' },
+        { transform: 'scale(1)', opacity: 1, textShadow: '0 3px 10px var(--shadow)' }
+      ], { duration: 450, easing: 'ease-out' });
+    }
+
+    function cycleText() {
+      if (!isCodeCorrect) {
+        setText("");
+        return;
+      }
+
+      beatCount++;
+      if (beatCount <= 2) {
+        setText(firstText);
+      } else if (beatCount <= 4) {
+        setText("I love you");
+      } else {
+        beatCount = 0; // Reset to start cycle again
+        setText(firstText);
+      }
+    }
+
+    // Sync text cycle with heartbeat
+    const beatElement = document.querySelector('.beat');
+    beatElement.addEventListener('animationiteration', cycleText);
+
+    function checkCode(name) {
+      name = String(name || "").trim().toLowerCase();
+      if (name === "azamjon") {
+        isCodeCorrect = true;
+        firstText = "Madina";
+      } else if (name === "madina") {
+        isCodeCorrect = true;
+        firstText = "Azamjon";
+      } else {
+        isCodeCorrect = false;
+        firstText = "";
+      }
+      beatCount = 0; // Reset beat count
+      cycleText(); // Start cycle immediately
+    }
+
+    applyBtn.addEventListener('click', () => checkCode(input.value));
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        checkCode(input.value);
+      }
+    });
+
+    // Initialize with empty heart
+    setText("");
+  </script>
+</body>
+</html>
