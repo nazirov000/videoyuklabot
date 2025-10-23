@@ -1,3 +1,4 @@
+import asyncio
 import os
 from yt_dlp import YoutubeDL
 from moviepy.editor import VideoFileClip
@@ -19,7 +20,7 @@ from telegram.ext import (
 from telegram.request import HTTPXRequest
 
 # --- TOKEN ---
-BOT_TOKEN = "7906977951:AAE7Z1T5CeUlbRf9si1-PxIPrR1QREbvq-M"
+BOT_TOKEN = os.getenv("BOT_TOKEN", "7906977951:AAE7Z1T5CeUlbRf9si1-PxIPrR1QREbvq-M")
 
 # --- URL saqlash uchun dict ---
 USER_URLS = {}
@@ -47,12 +48,12 @@ BOT_ABOUT_TEXT = (
 def get_video_keyboard(vid):
     return InlineKeyboardMarkup([
         [InlineKeyboardButton("🎵 MP3 yuklash", callback_data=f"mp3_{vid}")],
-        [InlineKeyboardButton("🗑️ O‘chirish", callback_data=f"delete_{vid}")]
+        [InlineKeyboardButton("🗑️ O'chirish", callback_data=f"delete_{vid}")]
     ])
 
 def get_delete_only_keyboard(vid):
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton("🗑️ O‘chirish", callback_data=f"delete_{vid}")]
+        [InlineKeyboardButton("🗑️ O'chirish", callback_data=f"delete_{vid}")]
     ])
 
 # --- Umumiy caption ---
@@ -128,8 +129,7 @@ def extract_audio_from_file(video_path):
             clip.close()
             return None
         audio_path = os.path.splitext(video_path)[0] + ".mp3"
-        # Eng minimal hajm uchun 64k bitrate
-        clip.audio.write_audiofile(audio_path, codec="mp3", bitrate="64k", logger=None)
+        clip.audio.write_audiofile(audio_path, codec="mp3", bitrate="64k", logger=None, verbose=False)
         clip.close()
         return audio_path
     except Exception as e:
@@ -173,30 +173,32 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         progress_msg = await q.message.reply_text("⏳ Video tayyorlanmoqda...")
 
-        # Videoni to‘g‘ridan-to‘g‘ri URL orqali yuborish
-        vurl, title = get_instagram_url(url, audio_only=False)
         try:
+            vurl, title = get_instagram_url(url, audio_only=False)
             await q.message.reply_video(
                 vurl,
                 caption=get_caption(),
                 reply_markup=get_video_keyboard(vid),
                 parse_mode="HTML"
             )
-        except Exception:
-            # Agar direct URL ishlamasa, fallback sifatida yuklab yuboramiz
-            ydl_opts = {"outtmpl": f"{vid}.mp4", "format": "best"}
-            with YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(url, download=True)
-                video_path = ydl.prepare_filename(info)
-            with open(video_path, "rb") as f:
-                await q.message.reply_video(
-                    f,
-                    caption=get_caption(),
-                    reply_markup=get_video_keyboard(vid),
-                    parse_mode="HTML"
-                )
-            if os.path.exists(video_path):
-                os.remove(video_path)
+        except Exception as e:
+            print(f"❌ Video yuborishda xato: {e}")
+            try:
+                ydl_opts = {"outtmpl": f"{vid}.mp4", "format": "best", "quiet": True, "no_warnings": True}
+                with YoutubeDL(ydl_opts) as ydl:
+                    info = ydl.extract_info(url, download=True)
+                    video_path = ydl.prepare_filename(info)
+                with open(video_path, "rb") as f:
+                    await q.message.reply_video(
+                        f,
+                        caption=get_caption(),
+                        reply_markup=get_video_keyboard(vid),
+                        parse_mode="HTML"
+                    )
+                if os.path.exists(video_path):
+                    os.remove(video_path)
+            except Exception as fallback_error:
+                await q.message.reply_text(f"❌ Video yuklab olib bo'lmadi: {str(fallback_error)[:100]}")
 
         await progress_msg.delete()
 
@@ -209,28 +211,30 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         progress_msg = await q.message.reply_text("⏳ MP3 tayyorlanmoqda...")
 
-        # Videoni vaqtinchalik yuklab olish
-        ydl_opts = {"outtmpl": f"{vid}.mp4", "format": "best"}
-        with YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-            video_path = ydl.prepare_filename(info)
+        try:
+            ydl_opts = {"outtmpl": f"{vid}.mp4", "format": "best", "quiet": True, "no_warnings": True}
+            with YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(url, download=True)
+                video_path = ydl.prepare_filename(info)
 
-        # Audio ajratish
-        audio_path = extract_audio_from_file(video_path)
-        if audio_path:
-            with open(audio_path, "rb") as f:
-                await q.message.reply_audio(
-                    f,
-                    caption=get_caption(),
-                    reply_markup=get_delete_only_keyboard(vid),
-                    parse_mode="HTML"
-                )
-            if os.path.exists(audio_path):
-                os.remove(audio_path)
+            audio_path = extract_audio_from_file(video_path)
+            if audio_path:
+                with open(audio_path, "rb") as f:
+                    await q.message.reply_audio(
+                        f,
+                        caption=get_caption(),
+                        reply_markup=get_delete_only_keyboard(vid),
+                        parse_mode="HTML"
+                    )
+                if os.path.exists(audio_path):
+                    os.remove(audio_path)
+            else:
+                await q.message.reply_text("❌ Audio ajratib bo'lmadi.")
 
-        # Videoni ham o‘chirish
-        if os.path.exists(video_path):
-            os.remove(video_path)
+            if os.path.exists(video_path):
+                os.remove(video_path)
+        except Exception as e:
+            await q.message.reply_text(f"❌ MP3 tayyorlanishda xato: {str(e)[:100]}")
 
         await progress_msg.delete()
 
@@ -244,11 +248,18 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def main():
     request = HTTPXRequest(connect_timeout=30.0, read_timeout=600.0)
     app = Application.builder().token(BOT_TOKEN).request(request).build()
+
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_menu_buttons))
     app.add_handler(CallbackQueryHandler(callback_handler))
-    print("Bot ishga tushdi!")
-    app.run_polling()
+
+    print("✅ Bot ishga tushdi!")
+
+    try:
+        asyncio.run(app.run_polling(stop_signals=None))
+    except (KeyboardInterrupt, SystemExit):
+        print("🛑 Bot to'xtatildi.")
+
 
 if __name__ == "__main__":
     main()
