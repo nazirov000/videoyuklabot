@@ -412,17 +412,17 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await q.edit_message_text("⚠️ Xatolik yuz berdi. Iltimos, qayta urinib ko'ring.")
         except:
             pass
-
 # --- BOTNI ISHGA TUSHIRISH ---
 def main():
-    app = Application.builder().token(BOT_TOKEN).build()
+    app = ApplicationBuilder().token(BOT_TOKEN).build()
+
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_menu_buttons))
     app.add_handler(MessageHandler(filters.VIDEO, handle_message))
     app.add_handler(CallbackQueryHandler(callback_handler))
+
     print("🤖 Bot ishga tushdi | @Vidgramuz_bot")
     app.run_polling()
 
 if __name__ == "__main__":
     main()
-   
