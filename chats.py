@@ -1,7 +1,6 @@
 import asyncio
 import os
 from yt_dlp import YoutubeDL
-from moviepy.editor import VideoFileClip
 from telegram import (
     Update,
     InlineKeyboardButton,
@@ -38,25 +37,12 @@ def get_main_menu():
     )
 
 BOT_ABOUT_TEXT = (
-    "<b>📱 Instagram Video & MP3 Bot</b>\n\n"
+    "<b>📱 Instagram Video Bot</b>\n\n"
     "🎬 Reels, Post, Story — hammasini yuklab beraman!\n\n"
     "• 📹 Video yuklash\n"
-    "• 🎵 Minimal hajmli MP3 musiqa\n"
     "• 💾 50 MB gacha fayl (Telegram limiti)\n\n"
     "👨‍💻 Muallif: <a href='https://t.me/Nazirov_Azamjon'>@Nazirov_Azamjon</a>"
 )
-
-# --- Tugmalar ---
-def get_video_keyboard(vid):
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton("🎵 MP3 yuklash", callback_data=f"mp3_{vid}")],
-        [InlineKeyboardButton("🗑️ O'chirish", callback_data=f"delete_{vid}")]
-    ])
-
-def get_delete_only_keyboard(vid):
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton("🗑️ O'chirish", callback_data=f"delete_{vid}")]
-    ])
 
 # --- Umumiy caption ---
 def get_caption():
@@ -72,7 +58,7 @@ def get_caption():
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "👋 Assalomu alaykum!\n\n"
-        "📸 Instagram link yuboring — men sizga <b>video yoki MP3</b> qilib yuboraman.",
+        "📸 Instagram link yuboring — men sizga <b>video</b> qilib yuboraman.",
         reply_markup=get_main_menu(),
         parse_mode="HTML"
     )
@@ -116,34 +102,18 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     USER_URLS[vid] = url
 
     keyboard = [
-        [InlineKeyboardButton("🎬 Video", callback_data=f"video_{vid}")],
-        [InlineKeyboardButton("🎵 MP3", callback_data=f"mp3_{vid}")]
+        [InlineKeyboardButton("🎬 Video yuklab olish", callback_data=f"video_{vid}")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    await msg.reply_text("⬇️ Yuklab olish turini tanlang:", reply_markup=reply_markup)
-
-# --- AUDIO AJRATISH ---
-def extract_audio_from_file(video_path):
-    try:
-        clip = VideoFileClip(video_path)
-        if clip.audio is None:
-            clip.close()
-            return None
-        audio_path = os.path.splitext(video_path)[0] + ".mp3"
-        clip.audio.write_audiofile(audio_path, codec="mp3", bitrate="64k", logger=None, verbose=False)
-        clip.close()
-        return audio_path
-    except Exception as e:
-        print(f"❌ Audio ajratishda xato: {e}")
-        return None
+    await msg.reply_text("⬇️ Video yuklab olinmoqda...", reply_markup=reply_markup)
 
 # --- Direct URL olish (User-Agent bilan) ---
-def get_instagram_url(url, audio_only=False):
+def get_instagram_url(url):
     ydl_opts = {
         "quiet": True,
         "no_warnings": True,
-        "format": "bestaudio/best" if audio_only else "best",
+        "format": "best",
         "http_headers": {
             "User-Agent": (
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -176,11 +146,10 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         progress_msg = await q.message.reply_text("⏳ Video tayyorlanmoqda...")
 
         try:
-            vurl, title = get_instagram_url(url, audio_only=False)
+            vurl, title = get_instagram_url(url)
             await q.message.reply_video(
                 vurl,
                 caption=get_caption(),
-                reply_markup=get_video_keyboard(vid),
                 parse_mode="HTML"
             )
         except Exception as e:
@@ -194,7 +163,6 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     await q.message.reply_video(
                         f,
                         caption=get_caption(),
-                        reply_markup=get_video_keyboard(vid),
                         parse_mode="HTML"
                     )
                 if os.path.exists(video_path):
@@ -203,48 +171,6 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await q.message.reply_text(f"❌ Video yuklab olib bo'lmadi: {str(fallback_error)[:100]}")
 
         await progress_msg.delete()
-
-    elif action.startswith("mp3_"):
-        vid = action.split("_", 1)[1]
-        url = USER_URLS.get(vid)
-        if not url:
-            await q.message.reply_text("❌ Link topilmadi.")
-            return
-
-        progress_msg = await q.message.reply_text("⏳ MP3 tayyorlanmoqda...")
-
-        try:
-            ydl_opts = {"outtmpl": f"{vid}.mp4", "format": "best", "quiet": True, "no_warnings": True}
-            with YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(url, download=True)
-                video_path = ydl.prepare_filename(info)
-
-            audio_path = extract_audio_from_file(video_path)
-            if audio_path:
-                with open(audio_path, "rb") as f:
-                    await q.message.reply_audio(
-                        f,
-                        caption=get_caption(),
-                        reply_markup=get_delete_only_keyboard(vid),
-                        parse_mode="HTML"
-                    )
-                if os.path.exists(audio_path):
-                    os.remove(audio_path)
-            else:
-                await q.message.reply_text("❌ Audio ajratib bo'lmadi.")
-
-            if os.path.exists(video_path):
-                os.remove(video_path)
-        except Exception as e:
-            await q.message.reply_text(f"❌ MP3 tayyorlanishda xato: {str(e)[:100]}")
-
-        await progress_msg.delete()
-
-    elif action.startswith("delete_"):
-        await q.message.delete()
-        vid = action.split("_", 1)[1]
-        if vid in USER_URLS:
-            del USER_URLS[vid]
 
 # --- BOTNI ISHGA TUSHIRISH ---
 def main():
